@@ -3,26 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <title>Disposable Chat</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
 <style>
+/* ===== GLOBAL ===== */
 body {
     margin: 0;
-    background: #000;
+    background: radial-gradient(circle at top, #0a0a0a, #000);
     color: #fff;
-    font-family: Arial, sans-serif;
+    font-family: system-ui, Arial, sans-serif;
     height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
+/* ===== APP ===== */
 .screen {
-    width: 360px;
-    height: 540px;
-    background: #050505;
-    border-radius: 14px;
-    box-shadow: 0 0 15px rgba(255,255,255,0.15);
+    width: 100%;
+    max-width: 420px;
+    height: 100vh;
+    max-height: 720px;
+    background: linear-gradient(180deg, #070707, #020202);
+    border-radius: 18px;
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.08),
+        0 10px 40px rgba(0,0,0,0.8);
     display: none;
     flex-direction: column;
 }
@@ -31,97 +37,125 @@ body {
     display: flex;
 }
 
+/* ===== HEADER ===== */
 .header {
-    padding: 14px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 16px;
     text-align: center;
     font-weight: 600;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
+/* ===== SETUP ===== */
 .setup {
-    padding: 20px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 }
 
 input {
     background: #000;
-    border: 1px solid rgba(255,255,255,0.3);
+    border: 1px solid rgba(255,255,255,0.25);
     color: #fff;
-    padding: 12px;
-    border-radius: 10px;
+    padding: 14px;
+    border-radius: 12px;
     outline: none;
 }
 
 button {
-    padding: 12px;
-    border-radius: 10px;
+    padding: 14px;
+    border-radius: 12px;
     border: none;
     font-weight: 600;
     background: #fff;
     color: #000;
     cursor: pointer;
-    opacity: 0.4;
+    opacity: 0.35;
 }
 
 button.enabled {
     opacity: 1;
 }
 
+/* ===== CHAT ===== */
 .chat {
     flex: 1;
-    padding: 12px;
+    padding: 16px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
+/* ===== ANIMATION ===== */
+@keyframes bubbleIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ===== BUBBLES ===== */
 .bubble {
-    max-width: 75%;
-    padding: 10px 14px;
-    border-radius: 14px;
+    max-width: 78%;
+    padding: 10px 14px 8px;
     font-size: 14px;
-    line-height: 1.4;
+    line-height: 1.45;
+    border-radius: 16px;
+    animation: bubbleIn 0.18s ease-out;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
 .me {
     align-self: flex-end;
-    background: #fff;
+    background: linear-gradient(180deg, #ffffff, #eaeaea);
     color: #000;
-    border-bottom-right-radius: 4px;
+    border-bottom-right-radius: 6px;
 }
 
 .them {
     align-self: flex-start;
-    background: #1a1a1a;
-    border-bottom-left-radius: 4px;
+    background: #1b1b1b;
+    border-bottom-left-radius: 6px;
 }
 
+/* ===== TIMESTAMP ===== */
+.time {
+    display: block;
+    font-size: 10px;
+    margin-top: 4px;
+    opacity: 0.5;
+}
+
+/* ===== FOOTER ===== */
 .footer {
-    padding: 10px;
-    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 12px;
+    border-top: 1px solid rgba(255,255,255,0.08);
     display: flex;
-    gap: 8px;
+    gap: 10px;
 }
 
 textarea {
     flex: 1;
     resize: none;
-    height: 42px;
-    border-radius: 10px;
+    height: 56px;
+    border-radius: 12px;
     background: #000;
     color: #fff;
-    border: 1px solid rgba(255,255,255,0.3);
-    padding: 8px;
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 10px 12px;
+    outline: none;
 }
 </style>
 </head>
 
 <body>
 
-<!-- SETUP SCREEN -->
+<!-- SETUP -->
 <div class="screen active" id="setupScreen">
     <div class="header">Chat Setup</div>
     <div class="setup">
@@ -132,12 +166,12 @@ textarea {
     </div>
 </div>
 
-<!-- CHAT SCREEN -->
+<!-- CHAT -->
 <div class="screen" id="chatScreen">
     <div class="header">Disposable Chat</div>
     <div class="chat" id="chatBox"></div>
     <div class="footer">
-        <textarea id="message"></textarea>
+        <textarea id="message" placeholder="Type message..."></textarea>
         <button id="sendBtn">Send</button>
     </div>
 </div>
@@ -147,13 +181,16 @@ var myTopic = document.getElementById("myTopic");
 var friendTopic = document.getElementById("friendTopic");
 var nickname = document.getElementById("nickname");
 var startBtn = document.getElementById("startBtn");
+var chatBox = document.getElementById("chatBox");
+var message = document.getElementById("message");
+var sendBtn = document.getElementById("sendBtn");
 
+/* ===== SETUP ===== */
 function checkSetup() {
     var ok = myTopic.value && friendTopic.value && nickname.value;
     startBtn.disabled = !ok;
     startBtn.classList.toggle("enabled", ok);
 }
-
 myTopic.oninput = friendTopic.oninput = nickname.oninput = checkSetup;
 
 startBtn.onclick = function () {
@@ -162,24 +199,34 @@ startBtn.onclick = function () {
     listen(friendTopic.value.trim());
 };
 
-function addBubble(text, cls) {
+/* ===== TIME FORMAT ===== */
+function formatTime(ts) {
+    var d = new Date(ts);
+    return d.getHours().toString().padStart(2, "0") + ":" +
+           d.getMinutes().toString().padStart(2, "0");
+}
+
+/* ===== UI ===== */
+function addBubble(text, cls, time) {
     var div = document.createElement("div");
     div.className = "bubble " + cls;
-    div.textContent = text;
+    div.innerHTML = text + `<span class="time">${formatTime(time)}</span>`;
     chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-sendBtn.onclick = function () {
+/* ===== SEND ===== */
+function sendMessage() {
     var text = message.value.trim();
     if (!text) return;
 
-    addBubble(text, "me");
+    var now = Date.now();
+    addBubble(text, "me", now);
 
     var payload = JSON.stringify({
         from: nickname.value,
         text: text,
-        time: Date.now()
+        time: now
     });
 
     var xhr = new XMLHttpRequest();
@@ -187,8 +234,19 @@ sendBtn.onclick = function () {
     xhr.send(payload);
 
     message.value = "";
-};
+}
 
+sendBtn.onclick = sendMessage;
+
+/* ENTER TO SEND */
+message.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+/* ===== RECEIVE ===== */
 function listen(topic) {
     var xhr = new XMLHttpRequest();
     xhr.open(
@@ -204,7 +262,7 @@ function listen(topic) {
             try {
                 var msg = JSON.parse(last);
                 var data = JSON.parse(msg.message);
-                addBubble(data.from + ": " + data.text, "them");
+                addBubble(data.from + ": " + data.text, "them", data.time);
             } catch (e) {}
         }
     };
