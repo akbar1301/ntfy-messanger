@@ -32,10 +32,7 @@ body {
     display: none;
     flex-direction: column;
 }
-
-.screen.active {
-    display: flex;
-}
+.screen.active { display: flex; }
 
 /* ===== HEADER ===== */
 .header {
@@ -72,10 +69,7 @@ button {
     cursor: pointer;
     opacity: 0.35;
 }
-
-button.enabled {
-    opacity: 1;
-}
+button.enabled { opacity: 1; }
 
 /* ===== CHAT ===== */
 .chat {
@@ -85,18 +79,6 @@ button.enabled {
     display: flex;
     flex-direction: column;
     gap: 12px;
-}
-
-/* ===== ANIMATION ===== */
-@keyframes bubbleIn {
-    from {
-        opacity: 0;
-        transform: translateY(6px) scale(0.96);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
 }
 
 /* ===== BUBBLES ===== */
@@ -109,18 +91,19 @@ button.enabled {
     animation: bubbleIn 0.18s ease-out;
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
-
 .me {
     align-self: flex-end;
     background: linear-gradient(180deg, #ffffff, #eaeaea);
     color: #000;
-    border-bottom-right-radius: 6px;
 }
-
 .them {
     align-self: flex-start;
     background: #1b1b1b;
-    border-bottom-left-radius: 6px;
+}
+
+@keyframes bubbleIn {
+    from { opacity:0; transform:translateY(6px) scale(.96); }
+    to   { opacity:1; transform:none; }
 }
 
 /* ===== IMAGE ===== */
@@ -131,7 +114,7 @@ button.enabled {
     cursor: pointer;
 }
 
-/* ===== TIMESTAMP ===== */
+/* ===== TIME ===== */
 .time {
     display: block;
     font-size: 10px;
@@ -146,7 +129,6 @@ button.enabled {
     display: flex;
     gap: 10px;
 }
-
 textarea {
     flex: 1;
     resize: none;
@@ -156,10 +138,31 @@ textarea {
     color: #fff;
     border: 1px solid rgba(255,255,255,0.25);
     padding: 10px 12px;
-    outline: none;
 }
 
-/* ===== FULLSCREEN IMAGE ===== */
+/* ===== IMAGE PREVIEW ===== */
+#preview {
+    padding: 10px 16px;
+}
+#preview img {
+    max-width: 120px;
+    border-radius: 10px;
+    display: block;
+}
+#progress {
+    height: 4px;
+    background: #444;
+    margin-top: 6px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+#progress div {
+    height: 100%;
+    width: 0%;
+    background: #4ade80;
+}
+
+/* ===== FULLSCREEN ===== */
 .fullscreen {
     position: fixed;
     inset: 0;
@@ -169,7 +172,6 @@ textarea {
     justify-content: center;
     z-index: 999;
 }
-
 .fullscreen img {
     max-width: 95%;
     max-height: 95%;
@@ -194,179 +196,172 @@ textarea {
 <div class="screen" id="chatScreen">
     <div class="header">NT Chat</div>
     <div class="chat" id="chatBox"></div>
+
+    <div id="preview" hidden>
+        <img id="previewImg">
+        <div id="progress"><div></div></div>
+    </div>
+
     <div class="footer">
         <input type="file" id="imageInput" accept="image/*" hidden>
         <button id="imageBtn">📷</button>
-        <textarea id="message" placeholder="Type message..."></textarea>
+        <textarea id="message"></textarea>
         <button id="sendBtn">Send</button>
     </div>
 </div>
 
 <script>
-var myTopic = document.getElementById("myTopic");
-var friendTopic = document.getElementById("friendTopic");
-var nickname = document.getElementById("nickname");
-var startBtn = document.getElementById("startBtn");
-var chatBox = document.getElementById("chatBox");
-var message = document.getElementById("message");
-var sendBtn = document.getElementById("sendBtn");
-var imageInput = document.getElementById("imageInput");
-var imageBtn = document.getElementById("imageBtn");
+const myTopic = myTopicElem = document.getElementById("myTopic");
+const friendTopic = document.getElementById("friendTopic");
+const nickname = document.getElementById("nickname");
+const startBtn = document.getElementById("startBtn");
+const chatBox = document.getElementById("chatBox");
+const message = document.getElementById("message");
+const imageInput = document.getElementById("imageInput");
+const imageBtn = document.getElementById("imageBtn");
+const preview = document.getElementById("preview");
+const previewImg = document.getElementById("previewImg");
+const progressBar = document.querySelector("#progress div");
 
 /* ===== SETUP ===== */
-function checkSetup() {
-    var ok = myTopic.value && friendTopic.value && nickname.value;
+function checkSetup(){
+    const ok = myTopic.value && friendTopic.value && nickname.value;
     startBtn.disabled = !ok;
     startBtn.classList.toggle("enabled", ok);
 }
 myTopic.oninput = friendTopic.oninput = nickname.oninput = checkSetup;
 
-startBtn.onclick = function () {
+startBtn.onclick = ()=>{
     setupScreen.classList.remove("active");
     chatScreen.classList.add("active");
     listen(friendTopic.value.trim());
 };
 
 /* ===== TIME ===== */
-function formatTime(ts) {
-    var d = new Date(ts);
-    return d.getHours().toString().padStart(2,"0") + ":" +
+function formatTime(ts){
+    const d = new Date(ts);
+    return d.getHours().toString().padStart(2,"0")+":"+
            d.getMinutes().toString().padStart(2,"0");
 }
 
 /* ===== UI ===== */
-function addBubble(html, cls, time) {
-    var div = document.createElement("div");
-    div.className = "bubble " + cls;
+function addBubble(html, cls, time){
+    const div = document.createElement("div");
+    div.className = "bubble "+cls;
     div.innerHTML = html + `<span class="time">${formatTime(time)}</span>`;
     chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 /* ===== SEND TEXT ===== */
-function sendMessage() {
-    var text = message.value.trim();
-    if (!text) return;
-
-    var now = Date.now();
-    addBubble(text, "me", now);
-
-    sendPayload({
-        type: "text",
-        text: text,
-        time: now
-    });
-
-    message.value = "";
-}
-
 sendBtn.onclick = sendMessage;
-
-message.addEventListener("keydown", function(e){
-    if (e.key === "Enter" && !e.shiftKey) {
+message.onkeydown = e=>{
+    if(e.key==="Enter" && !e.shiftKey){
         e.preventDefault();
         sendMessage();
     }
-});
-
-/* ===== IMAGE ===== */
-imageBtn.onclick = () => imageInput.click();
-
-imageInput.onchange = async function () {
-    var file = imageInput.files[0];
-    if (!file) return;
-
-    var compressed = await compressImage(file);
-    var url = await uploadToCatbox(compressed);
-
-    var now = Date.now();
-    addBubble(`<img src="${url}">`, "me", now);
-
-    sendPayload({
-        type: "image",
-        url: url,
-        time: now
-    });
-
-    imageInput.value = "";
 };
 
-/* ===== SEND PAYLOAD ===== */
-function sendPayload(data) {
-    var payload = JSON.stringify({
-        from: nickname.value,
-        ...data
-    });
+function sendMessage(){
+    const text = message.value.trim();
+    if(!text) return;
+    const now = Date.now();
+    addBubble(text,"me",now);
+    sendPayload({type:"text",text,time:now});
+    message.value="";
+}
 
-    fetch("https://ntfy.sh/" + encodeURIComponent(myTopic.value), {
-        method: "POST",
-        body: payload
+/* ===== IMAGE FLOW ===== */
+imageBtn.onclick = ()=>imageInput.click();
+
+imageInput.onchange = async ()=>{
+    const file = imageInput.files[0];
+    if(!file) return;
+
+    const compressed = await compressImage(file);
+    previewImg.src = URL.createObjectURL(compressed);
+    progressBar.style.width="0%";
+    preview.hidden = false;
+
+    uploadTo0x0(compressed);
+};
+
+function uploadTo0x0(file){
+    const xhr = new XMLHttpRequest();
+    const fd = new FormData();
+    fd.append("file", file);
+
+    xhr.open("POST","https://0x0.st");
+    xhr.upload.onprogress = e=>{
+        if(e.lengthComputable){
+            progressBar.style.width = (e.loaded/e.total*100)+"%";
+        }
+    };
+    xhr.onload = ()=>{
+        const url = xhr.responseText.trim();
+        const now = Date.now();
+        addBubble(`<img src="${url}">`,"me",now);
+        sendPayload({type:"image",url,time:now});
+        preview.hidden = true;
+        imageInput.value="";
+    };
+    xhr.send(fd);
+}
+
+/* ===== SEND PAYLOAD ===== */
+function sendPayload(data){
+    fetch("https://ntfy.sh/"+encodeURIComponent(myTopic.value),{
+        method:"POST",
+        body: JSON.stringify({from:nickname.value,...data})
     });
 }
 
 /* ===== RECEIVE ===== */
-function listen(topic) {
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", "https://ntfy.sh/" + encodeURIComponent(topic) + "/json?stream=1", true);
-
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 3) {
-            var lines = xhr.responseText.trim().split("\n");
-            var last = lines[lines.length - 1];
-            try {
-                var msg = JSON.parse(last);
-                var d = JSON.parse(msg.message);
-
-                if (d.type === "image") {
-                    addBubble(d.from + ":<br><img src=\"" + d.url + "\">", "them", d.time);
-                } else {
-                    addBubble(d.from + ": " + d.text, "them", d.time);
+function listen(topic){
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET","https://ntfy.sh/"+encodeURIComponent(topic)+"/json?stream=1",true);
+    xhr.onreadystatechange = ()=>{
+        if(xhr.readyState===3){
+            const lines = xhr.responseText.trim().split("\n");
+            const last = lines[lines.length-1];
+            try{
+                const msg = JSON.parse(last);
+                const d = JSON.parse(msg.message);
+                if(d.type==="image"){
+                    addBubble(`${d.from}:<br><img src="${d.url}">`,"them",d.time);
+                }else{
+                    addBubble(`${d.from}: ${d.text}`,"them",d.time);
                 }
-            } catch(e){}
+            }catch{}
         }
     };
     xhr.send();
 }
 
-/* ===== IMAGE COMPRESS ===== */
-function compressImage(file) {
-    return new Promise(res => {
-        var img = new Image();
-        img.onload = function () {
-            var c = document.createElement("canvas");
-            var max = 1280;
-            var scale = Math.min(1, max / img.width);
-            c.width = img.width * scale;
-            c.height = img.height * scale;
-            c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-            c.toBlob(b => res(new File([b], file.name, { type: "image/jpeg" })), "image/jpeg", 0.75);
+/* ===== COMPRESS ===== */
+function compressImage(file){
+    return new Promise(res=>{
+        const img = new Image();
+        img.onload = ()=>{
+            const c = document.createElement("canvas");
+            const max = 1280;
+            let w = img.width, h = img.height;
+            if(w>max){h*=max/w; w=max;}
+            c.width=w; c.height=h;
+            c.getContext("2d").drawImage(img,0,0,w,h);
+            c.toBlob(b=>res(new File([b],"img.jpg",{type:"image/jpeg"})),"image/jpeg",0.75);
         };
         img.src = URL.createObjectURL(file);
     });
 }
 
-/* ===== CATBOX ===== */
-async function uploadToCatbox(file) {
-    var f = new FormData();
-    f.append("reqtype", "fileupload");
-    f.append("fileToUpload", file);
-
-    var r = await fetch("https://catbox.moe/user/api.php", {
-        method: "POST",
-        body: f
-    });
-
-    return (await r.text()).trim();
-}
-
-/* ===== FULLSCREEN VIEW ===== */
-chatBox.onclick = function(e) {
-    if (e.target.tagName !== "IMG") return;
-
-    var o = document.createElement("div");
-    o.className = "fullscreen";
-    o.innerHTML = `<img src="${e.target.src}">`;
-    o.onclick = () => o.remove();
+/* ===== FULLSCREEN ===== */
+chatBox.onclick = e=>{
+    if(e.target.tagName!=="IMG") return;
+    const o=document.createElement("div");
+    o.className="fullscreen";
+    o.innerHTML=`<img src="${e.target.src}">`;
+    o.onclick=()=>o.remove();
     document.body.appendChild(o);
 };
 </script>
