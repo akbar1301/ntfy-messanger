@@ -3,43 +3,61 @@ import fs from "fs";
 
 export const config = {
   api: {
-    bodyParser: false,
-  },
+    bodyParser: false
+  }
 };
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).end();
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const form = new formidable.IncomingForm();
+  const form = formidable({ multiples: false });
 
   form.parse(req, async (err, fields, files) => {
-    if (err || !files.file) {
-      return res.status(400).json({ error: "No file received" });
+    if (err) {
+      return res.status(500).json({ error: "Form parse error" });
     }
 
-    const file = files.file[0];
-    const buffer = fs.readFileSync(file.filepath);
-
-    const catForm = new FormData();
-    catForm.append("reqtype", "fileupload");
-    catForm.append(
-      "fileToUpload",
-      new Blob([buffer], { type: file.mimetype }),
-      file.originalFilename
-    );
-
-    const r = await fetch("https://catbox.moe/user/api.php", {
-      method: "POST",
-      body: catForm,
-    });
-
-    let url = (await r.text()).trim();
-    if (url.startsWith("http://")) {
-      url = url.replace("http://", "https://");
+    const file = files.file;
+    if (!file) {
+      return res.status(400).json({ error: "No file uploaded" });
     }
 
-    res.status(200).json({ url });
+    try {
+      // read uploaded file
+      const buffer = fs.readFileSync(file.filepath);
+      const base64 = buffer.toString("base64");
+
+      // upload to imgbb
+      const uploadRes = await fetch(
+        `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: new URLSearchParams({
+            image: base64
+          })
+        }
+      );
+
+      const json = await uploadRes.json();
+
+      if (!json.success) {
+        return res.status(500).json({
+          error: "Upload failed",
+          detail: json
+        });
+      }
+
+      return res.status(200).json({
+        url: json.data.url
+      });
+
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
   });
 }
