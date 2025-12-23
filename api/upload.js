@@ -1,6 +1,7 @@
 import formidable from "formidable";
 import fs from "fs";
 import fetch from "node-fetch";
+import FormData from "form-data";
 
 export const config = {
   api: {
@@ -28,25 +29,24 @@ export default async function handler(req, res) {
     const file = files.file[0];
     const buffer = fs.readFileSync(file.filepath);
 
-    const base64 = buffer.toString("base64");
+    const imgForm = new FormData();
+    imgForm.append("image", buffer.toString("base64"));
 
     const upload = await fetch(
       `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          image: base64,
-        }),
+        body: imgForm,
       }
     );
 
     const result = await upload.json();
 
     if (!result.success) {
-      return res.status(500).json({ error: "ImgBB upload failed", result });
+      return res.status(500).json({
+        error: "ImgBB upload failed",
+        result,
+      });
     }
 
     res.json({ url: result.data.url });
