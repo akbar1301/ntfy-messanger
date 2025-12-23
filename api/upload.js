@@ -1,5 +1,7 @@
 import formidable from "formidable";
 import fs from "fs";
+import FormData from "form-data";
+import fetch from "node-fetch";
 
 export const config = {
   api: {
@@ -25,25 +27,25 @@ export default async function handler(req, res) {
     }
 
     try {
-      // read uploaded file
+      // read file → base64
       const buffer = fs.readFileSync(file.filepath);
       const base64 = buffer.toString("base64");
 
-      // upload to imgbb
-      const uploadRes = await fetch(
+      // build multipart/form-data (PENTING)
+      const fd = new FormData();
+      fd.append("image", base64);
+
+      // upload to imgbb (SAMA PERSIS SEPERTI DOCS)
+      const upload = await fetch(
         `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-          body: new URLSearchParams({
-            image: base64
-          })
+          body: fd,
+          headers: fd.getHeaders()
         }
       );
 
-      const json = await uploadRes.json();
+      const json = await upload.json();
 
       if (!json.success) {
         return res.status(500).json({
