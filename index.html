@@ -2,163 +2,35 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>NT Chat — NTFY Temporary Chat</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-
-<style>
-body {
-    margin: 0;
-    background: radial-gradient(circle at top, #0b0b0b, #000);
-    color: #fff;
-    font-family: system-ui, Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    padding: 40px 16px 120px;
-}
-
-.container {
-    max-width: 720px;
-    width: 100%;
-}
-
-h1 {
-    font-size: 28px;
-    margin-bottom: 6px;
-}
-
-.subtitle {
-    opacity: 0.75;
-    margin-bottom: 18px;
-}
-
-p {
-    opacity: 0.85;
-    line-height: 1.6;
-}
-
-.section {
-    margin-top: 32px;
-    padding: 24px;
-    border-radius: 16px;
-    background: linear-gradient(180deg, #0a0a0a, #050505);
-    box-shadow:
-        0 0 0 1px rgba(255,255,255,0.08),
-        0 12px 30px rgba(0,0,0,0.8);
-}
-
-.section h2 {
-    margin-top: 0;
-    font-size: 20px;
-}
-
-.steps {
-    margin-top: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.step {
-    padding: 14px 16px;
-    border-radius: 12px;
-    background: #000;
-    border: 1px solid rgba(255,255,255,0.12);
-}
-
-code {
-    background: #000;
-    padding: 3px 6px;
-    border-radius: 6px;
-    font-size: 13px;
-    color: #cfcfcf;
-}
-
-a {
-    color: #fff;
-    text-decoration: none;
-    border-bottom: 1px solid rgba(255,255,255,0.3);
-}
-
-/* ===== FLOATING CTA ===== */
-.floating-cta {
-    position: fixed;
-    left: 50%;
-    bottom: 20px;
-    transform: translateX(-50%);
-    width: calc(100% - 32px);
-    max-width: 420px;
-    padding: 16px;
-    background: #fff;
-    color: #000;
-    text-align: center;
-    font-weight: 800;
-    border-radius: 16px;
-    box-shadow:
-        0 10px 30px rgba(0,0,0,0.8),
-        0 0 0 1px rgba(255,255,255,0.4);
-}
-
-.floating-cta:active {
-    transform: translateX(-50%) scale(0.98);
-}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NT Chat</title>
+<link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<div class="container">
 
+<div id="setup" class="screen">
 <h1>NT Chat</h1>
-<div class="subtitle">NTFY Temporary Chat</div>
-
-<p>
-Chat sementara berbasis <strong>ntfy</strong>.  
-Tanpa akun, tanpa server sendiri, tanpa histori permanen.
-</p>
-
-<div class="section">
-<h2>🔹 Apa itu Topic?</h2>
-<p>
-Topic adalah <strong>channel publik</strong> di ntfy.  
-Siapa pun yang mengetahui nama topic dapat mengirim dan menerima pesan.
-</p>
-<p>Contoh:</p>
-<code>ntchat-a8f3k-92</code>
+<input id="myTopic" placeholder="Your ntfy topic">
+<input id="peerTopic" placeholder="Friend ntfy topic">
+<input id="myName" placeholder="Your name">
+<button id="enterBtn">Enter Chat</button>
 </div>
 
-<div class="section">
-<h2>🔹 Membuat Topic (Web)</h2>
-<div class="steps">
-    <div class="step">1. Buka <a href="https://ntfy.sh/app" target="_blank">https://ntfy.sh/app</a></div>
-    <div class="step">2. Klik "Subscribe to Topic", Masukkan nama topic bebas</div>
-    <div class="step">3. Topic langsung aktif (tanpa login)</div>
-    <div class="step">4. Bagikan nama topic ke lawan chat</div>
+
+<div id="chat" class="screen hidden">
+<div id="messages"></div>
+
+
+<div class="input-bar">
+<input type="file" id="imgInput" accept="image/*" hidden>
+<button id="imgBtn">📷</button>
+<input id="msgInput" placeholder="Type message">
+<button id="sendBtn">Send</button>
 </div>
 </div>
 
-<div class="section">
-<h2>🔹 Membuat Topic (Aplikasi ntfy)</h2>
-<div class="steps">
-    <div class="step">1. Install aplikasi ntfy (Android / iOS)</div>
-    <div class="step">2. Subscribe ke topic dengan nama bebas menggunakan tombol "+"</div>
-    <div class="step">3. Topic siap digunakan</div>
-</div>
-</div>
 
-<div class="section">
-<h2>⚠ Catatan Keamanan</h2>
-<p>
-• Topic bersifat publik — gunakan nama acak<br>
-• Jangan gunakan untuk data sensitif<br>
-• Pesan bersifat sementara dan dapat hilang kapan saja
-</p>
-</div>
-
-</div>
-
-<a class="floating-cta" href="chat.html">
-🚀 Masuk NT Chat
-</a>
-
+<script src="app.js"></script>
 </body>
 </html>
