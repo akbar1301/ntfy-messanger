@@ -19,42 +19,57 @@ export default async function handler(req, res) {
     keepExtensions: true,
   });
 
-  try {
-    const [fields, files] = await form.parse(req);
-
-    if (!files.file || !files.file[0]) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
-    const file = files.file[0];
-    const buffer = fs.readFileSync(file.filepath);
-
-    const imgForm = new FormData();
-    imgForm.append("image", buffer.toString("base64"));
-
-    const upload = await fetch(
-      `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
-      {
-        method: "POST",
-        body: imgForm,
+  form.parse(req, async (err, fields, files) => {
+    try {
+      if (err) {
+        return res.status(400).json({ error: "Form parse error" });
       }
-    );
 
-    const result = await upload.json();
+      if (!files.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
 
-    if (!result.success) {
+      const file = Array.isArray(files.file)
+        ? files.file[0]
+        : files.file;
+
+      const buffer = fs.readFileSync(file.filepath);
+
+      if (!process.env.IMGBB_API_KEY) {
+        return res.status(500).json({
+          error: "Missing IMGBB_API_KEY",
+        });
+      }
+
+      const imgForm = new FormData();
+      imgForm.append("image", buffer.toString("base64"));
+
+      const upload = await fetch(
+        `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
+        {
+          method: "POST",
+          body: imgForm,
+        }
+      );
+
+      const result = await upload.json();
+
+      if (!result.success) {
+        return res.status(500).json({
+          error: "ImgBB upload failed",
+          result,
+        });
+      }
+
+      return res.json({
+        url: result.data.url,
+      });
+    } catch (e) {
+      console.error(e);
       return res.status(500).json({
-        error: "ImgBB upload failed",
-        result,
+        error: "Exception",
+        message: e.message,
       });
     }
-
-    res.json({ url: result.data.url });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      error: "Exception",
-      message: err.message,
-    });
-  }
+  });
 }
