@@ -1,7 +1,5 @@
 import formidable from "formidable";
 import fs from "fs";
-import FormData from "form-data";
-import fetch from "node-fetch";
 
 export const config = {
   api: {
@@ -31,17 +29,15 @@ export default async function handler(req, res) {
       const buffer = fs.readFileSync(file.filepath);
       const base64 = buffer.toString("base64");
 
-      // build multipart/form-data (PENTING)
+      // === PAKAI FormData & fetch NATIF (Node 18) ===
       const fd = new FormData();
       fd.append("image", base64);
 
-      // upload to imgbb (SAMA PERSIS SEPERTI DOCS)
       const upload = await fetch(
         `https://api.imgbb.com/1/upload?key=${process.env.IMGBB_API_KEY}`,
         {
           method: "POST",
-          body: fd,
-          headers: fd.getHeaders()
+          body: fd
         }
       );
 
@@ -59,7 +55,10 @@ export default async function handler(req, res) {
       });
 
     } catch (e) {
-      return res.status(500).json({ error: e.message });
+      return res.status(500).json({
+        error: "Exception",
+        message: e.message
+      });
     }
   });
 }
