@@ -9,23 +9,39 @@
 <body>
 
 
-<div id="setup" class="screen">
+<div id="setup" class="screen setup-screen">
+<div class="card">
 <h1>NT Chat</h1>
-<input id="myTopic" placeholder="Your ntfy topic">
-<input id="peerTopic" placeholder="Friend ntfy topic">
-<input id="myName" placeholder="Your name">
+<p class="subtitle">NTFY Temporary Chat</p>
+
+
+<input id="myTopic" placeholder="Your ntfy topic (send)">
+<input id="peerTopic" placeholder="Friend ntfy topic (receive)">
+<input id="myName" placeholder="Your nickname">
+
+
 <button id="enterBtn">Enter Chat</button>
+
+
+<div class="hint">
+Topics harus sama-sama disepakati.<br>
+Tidak ada akun. Tidak ada history.
+</div>
+</div>
 </div>
 
 
 <div id="chat" class="screen hidden">
+<div class="header">NT Chat</div>
+
+
 <div id="messages"></div>
 
 
 <div class="input-bar">
 <input type="file" id="imgInput" accept="image/*" hidden>
 <button id="imgBtn">📷</button>
-<input id="msgInput" placeholder="Type message">
+<input id="msgInput" placeholder="Type a message">
 <button id="sendBtn">Send</button>
 </div>
 </div>
