@@ -310,12 +310,19 @@ function sendMessage() {
     message.value = "";
 }
 
-sendBtn.onclick = sendMessage;
+sendBtn.onclick = function () {
+    if (pendingImageFile) {
+        uploadImage(pendingImageFile);
+        return;
+    }
+    sendMessage();
+};
+
 
 message.addEventListener("keydown", function(e){
     if(e.key==="Enter" && !e.shiftKey){
         e.preventDefault();
-        sendMessage();
+        sendBtn.click();
     }
 });
 
@@ -343,53 +350,70 @@ function listen(topic){
 }
 
 /* ===== IMAGE PREVIEW + UPLOAD ===== */
+let pendingImageFile = null;
+
+/* ===== IMAGE PICK (PREVIEW ONLY) ===== */
 imageBtn.onclick = () => imageInput.click();
 
-imageInput.onchange = function(){
+imageInput.onchange = function () {
     const file = imageInput.files[0];
-    if(!file) return;
+    if (!file) return;
+
+    pendingImageFile = file;
 
     previewImg.src = URL.createObjectURL(file);
-    progressBar.style.width="0%";
-    previewBox.style.display="flex";
-
-    uploadImage(file);
+    progressBar.style.width = "0%";
+    previewBox.style.display = "flex";
 };
 
-function uploadImage(file){
+function uploadImage(file) {
     const xhr = new XMLHttpRequest();
-    xhr.open("POST","/api/upload",true);
+    const form = new FormData();
 
-    xhr.upload.onprogress = function(e){
-        if(e.lengthComputable){
-            progressBar.style.width=(e.loaded/e.total*100)+"%";
+    form.append("file", file);
+
+    xhr.open("POST", "/api/upload", true);
+
+    xhr.upload.onprogress = function (e) {
+        if (e.lengthComputable) {
+            progressBar.style.width = (e.loaded / e.total * 100) + "%";
         }
     };
 
-    xhr.onload = function(){
+    xhr.onload = function () {
+        if (xhr.status !== 200) {
+            alert("Upload failed");
+            return;
+        }
+
         const res = JSON.parse(xhr.responseText);
         const now = Date.now();
 
-        addBubble(`<img src="${res.url}">`,"me",now);
+        // render locally
+        addBubble(`<img src="${res.url}">`, "me", now);
 
-        var payload = JSON.stringify({
-            from:nickname.value,
-            text: res.url,
-            time: now,
-            type: "image"
+        // broadcast via ntfy
+        fetch("https://ntfy.sh/" + encodeURIComponent(myTopic.value), {
+            method: "POST",
+            body: JSON.stringify({
+                from: nickname.value,
+                text: res.url,
+                time: now,
+                type: "image"
+            })
         });
 
-        fetch("https://ntfy.sh/" + encodeURIComponent(myTopic.value),{
-            method:"POST",
-            body: payload
-        });
-
-        previewBox.style.display="none";
-        imageInput.value="";
+        // cleanup UI state
+        URL.revokeObjectURL(previewImg.src);
+        previewBox.style.display = "none";
+        progressBar.style.width = "0%";
+        imageInput.value = "";
+        pendingImageFile = null;
     };
 
-    xhr.send(file);
+    xhr.send(form);
 }
+
 
 /* ===== FULLSCREEN IMAGE ===== */
 chatBox.onclick = function(e){
