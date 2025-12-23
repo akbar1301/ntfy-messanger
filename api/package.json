@@ -1,12 +1,10 @@
 {
-  "name": "nt-chat",
-  "version": "1.0.0",
-  "private": true,
   "type": "module",
-  "dependencies": {
-    "formidable": "^3.5.1"
-  },
   "engines": {
     "node": "24.x"
+  },
+  "dependencies": {
+    "formidable": "^3.5.4",
+    "node-fetch": "^3.3.2"
   }
 }
